@@ -86,6 +86,7 @@ def extract_data(invoicefile, templates=None, input_module=pdftotext):
     logger.debug("END pdftotext result =============================")
 
     logger.debug("Testing {} template files".format(len(templates)))
+    
     for t in templates:
         optimized_str = t.prepare_input(extracted_str)
 
@@ -94,6 +95,75 @@ def extract_data(invoicefile, templates=None, input_module=pdftotext):
 
     logger.error("No template for %s", invoicefile)
     return False
+
+
+def extract_data_with_text(invoicefile, templates=None, input_module=pdftotext):
+    """Extracts structured data from PDF/image invoices.
+
+    This function uses the text extracted from a PDF file or image and
+    pre-defined regex templates to find structured data.
+
+    Reads template if no template assigned
+    Required fields are matches from templates
+
+    Parameters
+    ----------
+    invoicefile : str
+        path of electronic invoice file in PDF,JPEG,PNG (example: "/home/duskybomb/pdf/invoice.pdf")
+    templates : list of instances of class `InvoiceTemplate`, optional
+        Templates are loaded using `read_template` function in `loader.py`
+    input_module : {'pdftotext', 'pdfminer', 'tesseract'}, optional
+        library to be used to extract text from given `invoicefile`,
+
+    Returns
+    -------
+    dict or False
+        extracted and matched fields or False if no template matches
+    string
+        text
+
+    Notes
+    -----
+    Import required `input_module` when using invoice2data as a library
+
+    See Also
+    --------
+    read_template : Function where templates are loaded
+    InvoiceTemplate : Class representing single template files that live as .yml files on the disk
+
+    Examples
+    --------
+    When using `invoice2data` as an library
+
+    >>> from invoice2data.input import pdftotext
+    >>> extract_data("invoice2data/test/pdfs/oyo.pdf", None, pdftotext)
+    {'issuer': 'OYO', 'amount': 1939.0, 'date': datetime.datetime(2017, 12, 31, 0, 0), 'invoice_number': 'IBZY2087',
+     'currency': 'INR', 'desc': 'Invoice IBZY2087 from OYO'}
+
+    """
+    if templates is None:
+        templates = read_templates()
+
+    # print(templates[0])
+    extracted_str = input_module.to_text(invoicefile).decode("utf-8")
+
+    logger.debug("START pdftotext result ===========================")
+    logger.debug(extracted_str)
+    logger.debug("END pdftotext result =============================")
+
+    logger.debug("Testing {} template files".format(len(templates)))
+
+    if len(extracted_str.strip()) == 0:
+        return False, extracted_str
+
+    for t in templates:
+        optimized_str = t.prepare_input(extracted_str)
+
+        if t.matches_input(optimized_str):
+            return t.extract(optimized_str), extracted_str
+
+    logger.error("No template for %s", invoicefile)
+    return False, extracted_str
 
 
 def create_parser():

@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_OPTIONS = {"line_separator": r"\n"}
 
-
 def parse(template, _settings, content):
     """Try to extract lines from the invoice"""
 
@@ -24,17 +23,36 @@ def parse(template, _settings, content):
     assert "end" in settings, "Lines end regex missing"
     assert "line" in settings, "Line regex missing"
 
+    if "check_multiple" in settings:
+        isComplete = False
+        line_groups = []
+        startIdx = 0
+        while not isComplete:
+            content = content[startIdx:]
+            lines, endIdx = _parse_lines(template, settings, content)
+            startIdx = endIdx
+          
+            if endIdx is None:
+                isComplete = True
+            else:
+                line_groups.append(lines)
+        return line_groups
+
+    lines, endIdx = _parse_lines(template, settings, content)
+    return lines
+
+def _parse_lines(template, settings, content):
     start = re.search(settings["start"], content)
     end = re.search(settings["end"], content)
     if not start or not end:
         logger.warning("no lines found - start %s, end %s", start, end)
-        return
-    content = content[start.end() : end.start()]
+        return None, None
+    line_group_content = content[start.end() : end.start()]
     lines = []
     current_row = {}
     if "first_line" not in settings and "last_line" not in settings:
         settings["first_line"] = settings["line"]
-    for line in re.split(settings["line_separator"], content):
+    for line in re.split(settings["line_separator"], line_group_content):
         # if the line has empty lines in it , skip them
         if not line.strip("").strip("\n") or not line:
             continue
@@ -84,4 +102,4 @@ def parse(template, _settings, content):
             if name in types:
                 row[name] = template.coerce_type(row[name], types[name])
 
-    return lines
+    return lines, end.end()

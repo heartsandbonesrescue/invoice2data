@@ -199,13 +199,13 @@ class InvoiceTemplate(OrderedDict):
                 if k.startswith("sum_amount") and type(v) is list:
                     k = k[4:]
                     result = parsers.regex.parse(self, {"regex": v, "type": "float", "group": "sum"}, optimized_str,
-                                                 True)
+                                                 False)
                 elif k.startswith("date") or k.endswith("date"):
-                    result = parsers.regex.parse(self, {"regex": v, "type": "date"}, optimized_str, True)
+                    result = parsers.regex.parse(self, {"regex": v, "type": "date"}, optimized_str, False)
                 elif k.startswith("amount"):
-                    result = parsers.regex.parse(self, {"regex": v, "type": "float"}, optimized_str, True)
+                    result = parsers.regex.parse(self, {"regex": v, "type": "float"}, optimized_str, False)
                 else:
-                    result = parsers.regex.parse(self, {"regex": v}, optimized_str, True)
+                    result = parsers.regex.parse(self, {"regex": v}, optimized_str, False)
 
                 if result is None:
                     logger.warning("regexp for field %s didn't match", k)
