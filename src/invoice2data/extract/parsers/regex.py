@@ -22,7 +22,6 @@ def parse(template, settings, content, legacy=False):
     if "regex" not in settings:
         return None
 
-    print(settings)
     result = []
     if isinstance(settings["regex"], list):
         for regex in settings["regex"]:
@@ -31,13 +30,10 @@ def parse(template, settings, content, legacy=False):
                 result += matches
     else:
         result = re.findall(settings["regex"], content)
-        
-    print("34",result)
 
     if "type" in settings:
         for k, v in enumerate(result):
             result[k] = template.coerce_type(v, settings["type"])
-    print("36", result)
 
     if "group" in settings:
         if settings["group"] == "sum":
@@ -53,9 +49,7 @@ def parse(template, settings, content, legacy=False):
             result = list(set(result))
         else:
             result = list(OrderedDict.fromkeys(result).keys())
-            print("54",result)
 
-    print("57", result)
     if isinstance(result, list) and len(result) == 1:
         result = result[0]
 
